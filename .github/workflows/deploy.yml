@@ -1,0 +1,57 @@
+name: Deploy Models to GitHub Pages
+
+on:
+  workflow_dispatch: # Allows manual trigger so it only runs once
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy-models:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Models Directory
+        run: mkdir -p dist/Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC
+
+      - name: Download Model Artifacts
+        run: |
+          MODEL_DIR="dist/Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC"
+          HF_BASE="https://huggingface.co/mlc-ai/Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC/resolve/main"
+          
+          echo "Downloading Configs..."
+          curl -L -o "$MODEL_DIR/mlc-chat-config.json" "$HF_BASE/mlc-chat-config.json"
+          curl -L -o "$MODEL_DIR/tokenizer.json" "$HF_BASE/tokenizer.json"
+          curl -L -o "$MODEL_DIR/tokenizer_config.json" "$HF_BASE/tokenizer_config.json"
+          curl -L -o "$MODEL_DIR/ndarray-cache.json" "$HF_BASE/ndarray-cache.json"
+          
+          echo "Downloading 30 Weight Shards (830MB - this may take 2-4 minutes)..."
+          for i in {0..29}; do
+            SHARD="params_shard_${i}.bin"
+            echo "::group::Downloading $SHARD"
+            curl -L -s -o "$MODEL_DIR/$SHARD" "$HF_BASE/$SHARD"
+            echo "::endgroup::"
+          done
+
+      - name: Download WASM Library
+        run: |
+          MODEL_DIR="dist/Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC"
+          # This is the verified WASM binary URL for Qwen2.5-Coder-1.5B
+          WASM_URL="https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/Qwen2-1.5B-Instruct-q4f16_1-ctx4k_cs1k-webgpu.wasm"
+          curl -L -o "$MODEL_DIR/Qwen2-1.5B-Instruct-q4f16_1-ctx4k_cs1k-webgpu.wasm" "$WASM_URL"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
