@@ -16,11 +16,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create Models Directory
-        run: mkdir -p dist/Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC
+        run: mkdir -p dist/Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC/resolve/main
 
       - name: Download Model Artifacts
         run: |
-          MODEL_DIR="dist/Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC"
+          MODEL_DIR="dist/Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC/resolve/main"
           HF_BASE="https://huggingface.co/mlc-ai/Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC/resolve/main"
           
           echo "Downloading Configs..."
@@ -28,6 +28,9 @@ jobs:
           curl -L -o "$MODEL_DIR/tokenizer.json" "$HF_BASE/tokenizer.json"
           curl -L -o "$MODEL_DIR/tokenizer_config.json" "$HF_BASE/tokenizer_config.json"
           curl -L -o "$MODEL_DIR/ndarray-cache.json" "$HF_BASE/ndarray-cache.json"
+          curl -L -o "$MODEL_DIR/vocab.json" "$HF_BASE/vocab.json"
+          curl -L -o "$MODEL_DIR/merges.txt" "$HF_BASE/merges.txt"
+          curl -L -o "$MODEL_DIR/tensor-cache.json" "$HF_BASE/tensor-cache.json"
           
           echo "Downloading 30 Weight Shards (830MB - this may take 2-4 minutes)..."
           for i in {0..29}; do
@@ -39,7 +42,7 @@ jobs:
 
       - name: Download WASM Library
         run: |
-          MODEL_DIR="dist/Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC"
+          MODEL_DIR="dist/Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC/resolve/main"
           # This is the verified WASM binary URL for Qwen2.5-Coder-1.5B
           WASM_URL="https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/main/web-llm-models/v0_2_80/Qwen2-1.5B-Instruct-q4f16_1-ctx4k_cs1k-webgpu.wasm"
           curl -L -o "$MODEL_DIR/Qwen2-1.5B-Instruct-q4f16_1-ctx4k_cs1k-webgpu.wasm" "$WASM_URL"
